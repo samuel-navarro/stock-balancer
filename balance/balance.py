@@ -1,4 +1,4 @@
-from typing import Dict, Callable
+from typing import Dict
 
 from security import Security
 
