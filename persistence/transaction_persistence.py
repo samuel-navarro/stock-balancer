@@ -4,6 +4,7 @@ import io
 import datetime as dt
 
 import pandas as pd
+import numpy as np
 
 from security import Security
 from persistence import PersistenceTextIO
@@ -66,20 +67,19 @@ class TransactionPersistence:
         dated_transactions = transactions_df.set_index(TRANSACTION_DATE).sort_index()
         all_share_ids = dated_transactions[SECURITY_ID].unique()
 
-        history_series = pd.Series(0, index=dated_transactions.index.unique())
+        date_index = dated_transactions.index.unique()
+        share_history = pd.DataFrame(0, index=date_index, columns=all_share_ids)
         for share_id in all_share_ids:
             relevant_rows = dated_transactions[SECURITY_ID] == share_id
-            cumulative_shares = dated_transactions.loc[relevant_rows, TRANSACTION_SHARE_AMOUNT].cumsum()
+            transactions = dated_transactions.loc[relevant_rows, TRANSACTION_SHARE_AMOUNT]
+            share_history.loc[dated_transactions.index[relevant_rows], share_id] = transactions
+            share_history[share_id] = share_history[share_id].cumsum()
 
-            def transform_row(row: pd.Series):
-                transaction_date = row[TRANSACTION_DATE]
-                share_amount = row[TRANSACTION_SHARE_AMOUNT]
-                price = share_amount * price_provider(Security(share_id), transaction_date.to_pydatetime())
-                return pd.Series([transaction_date, price], index=[TRANSACTION_DATE, 'Price'])
+        share_prices = pd.DataFrame(0, index=date_index, columns=all_share_ids)
+        for share_id in all_share_ids:
+            date_to_price = lambda date: price_provider(Security(share_id), date)
+            share_prices[share_id] = np.vectorize(date_to_price)(date_index)
 
-            prices = cumulative_shares.reset_index().apply(transform_row).groupby(TRANSACTION_DATE).sum()
+        portfolio = (share_prices * share_history).apply(np.sum, axis=1)
 
-            relevant_dates = history_series.index == prices.index
-            history_series[relevant_dates] = history_series[relevant_dates] + prices.values
-
-        return {date.to_pydatetime(): price for date, price in history_series.to_dict().items()}
+        return {date.to_pydatetime(): price for date, price in portfolio.to_dict().items()}

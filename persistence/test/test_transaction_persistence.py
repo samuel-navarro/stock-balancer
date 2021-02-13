@@ -65,3 +65,39 @@ class TransactionPersistenceTests(unittest.TestCase):
             self.assertEqual(saved_transaction[tr.TRANSACTION_SHARE_AMOUNT], expected_transaction.transaction_share_amount)
             self.assertEqual(saved_transaction[tr.TRANSACTION_DATE], expected_transaction.transaction_date)
 
+    def test_read_history(self):
+        dated_prices = {
+            datetime(2020, 1, 1): {
+                Security('AAPL'): 10,
+                Security('AMZN'): 20,
+                Security('TSLA'): 30
+            },
+
+            datetime(2020, 1, 4): {
+                Security('AAPL'): 50,
+                Security('AMZN'): 20,
+                Security('TSLA'): 30
+            },
+
+            datetime(2020, 1, 5): {
+                Security('AAPL'): 1,
+                Security('AMZN'): 2,
+                Security('TSLA'): 3
+            }
+        }
+
+        def get_price(sec: Security, date: datetime) -> float:
+            return dated_prices.get(date, dict()).get(sec)
+
+        test_io = TestTextIO()
+        persistence = tr.TransactionPersistence(test_io)
+
+        portfolio_history = persistence.read_portfolio_history(get_price)
+        expected_history = {
+            datetime(2020, 1, 1): 100+200+300,
+            datetime(2020, 1, 4): 250+200+300,
+            datetime(2020, 1, 5): 5+20+45
+        }
+
+        for date, price in portfolio_history.items():
+            self.assertAlmostEqual(price, expected_history.get(date, -1))
