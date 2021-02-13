@@ -24,7 +24,10 @@ class ShareTransaction:
 class TransactionPersistence:
     def __init__(self, text_reader: PersistenceTextIO):
         self._text_io = text_reader
-        self._transactions_csv = self._text_io.read_text()
+
+        transactions_buffer = io.StringIO(self._text_io.read_text())
+        self.transactions_dataframe = pd.read_csv(transactions_buffer, sep=';')
+        self.transactions_dataframe[TRANSACTION_DATE] = pd.to_datetime(self.transactions_dataframe[TRANSACTION_DATE])
 
     def read_portfolio(self) -> Dict[Security, int]:
         """
@@ -32,8 +35,7 @@ class TransactionPersistence:
         that records all the transactions.
         :return: The portfolio in amount of shares
         """
-        transactions_buffer = io.StringIO(self._transactions_csv)
-        transactions_df = pd.read_csv(transactions_buffer, sep=';')[[SECURITY_ID, TRANSACTION_SHARE_AMOUNT]]
+        transactions_df = self.transactions_dataframe[[SECURITY_ID, TRANSACTION_SHARE_AMOUNT]]
         aggregated_portfolio = transactions_df.groupby(SECURITY_ID).sum()
 
         security_to_amount = aggregated_portfolio[TRANSACTION_SHARE_AMOUNT].to_dict()
@@ -44,27 +46,20 @@ class TransactionPersistence:
         Appends new transactions to the file that persists the transactions.
         :param new_transactions: Transactions to save.
         """
-        transactions_buffer = io.StringIO(self._transactions_csv)
-        transactions_df = pd.read_csv(transactions_buffer, sep=';')
         new_transactions = pd.DataFrame(new_transactions)
-        combined_df = transactions_df.append(new_transactions)
+        self.transactions_dataframe = self.transactions_dataframe.append(new_transactions)
 
         result_buffer = io.StringIO('')
-        combined_df.to_csv(result_buffer, sep=';', index=False)
+        self.transactions_dataframe.to_csv(result_buffer, sep=';', index=False)
 
-        self._transactions_csv = result_buffer.getvalue()
-        self._text_io.save_text(self._transactions_csv)
+        self._text_io.save_text(result_buffer.getvalue())
 
     def read_portfolio_history(self, price_provider: Callable[[Security, dt.datetime], float]) -> Dict[dt.datetime, float]:
         """
         Reads the history of the portfolio
         :return: A dictionary whose key is a date, and whose value is the value of the portfolio at that time
         """
-        transactions_buffer = io.StringIO(self._transactions_csv)
-        transactions_df = pd.read_csv(transactions_buffer, sep=';')
-        transactions_df[TRANSACTION_DATE] = pd.to_datetime(transactions_df[TRANSACTION_DATE])
-
-        dated_transactions = transactions_df.set_index(TRANSACTION_DATE).sort_index()
+        dated_transactions = self.transactions_dataframe.set_index(TRANSACTION_DATE).sort_index()
         all_share_ids = dated_transactions[SECURITY_ID].unique()
 
         date_index = dated_transactions.index.unique()
