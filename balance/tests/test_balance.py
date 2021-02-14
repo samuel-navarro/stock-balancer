@@ -1,7 +1,7 @@
 import unittest
 
 import balance as bln
-from security import Security
+from data_types import Security
 
 
 class TestBalance(unittest.TestCase):

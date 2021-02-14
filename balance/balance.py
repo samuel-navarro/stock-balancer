@@ -1,6 +1,6 @@
 from typing import Dict
 
-from security import Security
+from data_types import Security
 
 
 Money = float

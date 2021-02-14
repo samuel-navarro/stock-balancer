@@ -3,7 +3,7 @@ from typing import Dict
 import pandas as pd
 
 from persistence import PersistenceDataFrameIO
-from security import Security
+from data_types import Security
 
 
 SECURITY_ID = "security_id"

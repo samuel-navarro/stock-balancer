@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from typing import Dict, Sequence, Callable
-import io
 import datetime as dt
 
 import pandas as pd
 import numpy as np
 
-from security import Security
+from data_types import Security
 from persistence import PersistenceDataFrameIO
 
 SECURITY_ID = 'security_id'

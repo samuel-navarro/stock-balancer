@@ -1,4 +1,3 @@
-import io
 import unittest
 from datetime import datetime
 
@@ -6,7 +5,7 @@ import pandas as pd
 
 from persistence import transaction_persistence as tr
 from persistence import PersistenceDataFrameIO
-from security import Security
+from data_types import Security
 
 TRANSACTIONS = [
     tr.ShareTransaction(security_id='AAPL', transaction_share_amount=10, transaction_date=datetime(2020, 1, 1)),
