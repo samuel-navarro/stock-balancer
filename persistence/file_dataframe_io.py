@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 
 from persistence import PersistenceDataFrameIO
@@ -8,7 +10,12 @@ class FileDataFrameIO(PersistenceDataFrameIO):
         self._file_name = file_name
 
     def read_dataframe(self) -> pd.DataFrame:
-        return pd.read_csv(self._file_name, sep=';')
+        file_path = Path(self._file_name)
+
+        if file_path.is_file():
+            return pd.read_csv(self._file_name, sep=';')
+        else:
+            return pd.DataFrame()
 
     def save_dataframe(self, dataframe: pd.DataFrame):
         dataframe.to_csv(self._file_name, sep=';')
