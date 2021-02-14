@@ -1,0 +1,1 @@
+from .yahoo_finance_fetcher import get_price
