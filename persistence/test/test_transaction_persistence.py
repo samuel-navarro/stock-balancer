@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 
 from persistence import transaction_persistence as tr
-from persistence import PersistenceTextIO
+from persistence import PersistenceDataFrameIO
 from security import Security
 
 TRANSACTIONS = [
@@ -17,27 +17,20 @@ TRANSACTIONS = [
 ]
 
 
-class TestTextIO(PersistenceTextIO):
+class TestDataFrameIO(PersistenceDataFrameIO):
     def __init__(self):
         self.saved_dataframes = []
 
-    def read_text(self):
-        buffer = io.StringIO()
-        dataframe = pd.DataFrame(TRANSACTIONS)
+    def read_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(TRANSACTIONS)
 
-        dataframe.to_csv(buffer, sep=';', index=False)
-        return buffer.getvalue()
-
-    def save_text(self, text: str):
-        buffer = io.StringIO(text)
-        dataframe = pd.read_csv(buffer, sep=';')
-
+    def save_dataframe(self, dataframe: pd.DataFrame):
         self.saved_dataframes.append(dataframe)
 
 
 class TransactionPersistenceTests(unittest.TestCase):
     def test_read_portfolio(self):
-        test_io = TestTextIO()
+        test_io = TestDataFrameIO()
         persistence = tr.TransactionPersistence(test_io)
         portfolio = persistence.read_portfolio()
 
@@ -46,7 +39,7 @@ class TransactionPersistenceTests(unittest.TestCase):
         self.assertEqual(portfolio[Security('AMZN')], 10)
 
     def test_save_transactions(self):
-        test_io = TestTextIO()
+        test_io = TestDataFrameIO()
         persistence = tr.TransactionPersistence(test_io)
 
         transactions_to_save = [
@@ -89,7 +82,7 @@ class TransactionPersistenceTests(unittest.TestCase):
         def get_price(sec: Security, date: datetime) -> float:
             return dated_prices.get(date, dict()).get(sec)
 
-        test_io = TestTextIO()
+        test_io = TestDataFrameIO()
         persistence = tr.TransactionPersistence(test_io)
 
         portfolio_history = persistence.read_portfolio_history(get_price)

@@ -1,2 +1,2 @@
-from .persistence_text_io import PersistenceTextIO
+from .persistence_dataframe_io import PersistenceDataFrameIO
 from .transaction_persistence import ShareTransaction, TransactionPersistence
