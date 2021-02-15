@@ -13,9 +13,9 @@ class FileDataFrameIO(PersistenceDataFrameIO):
         file_path = Path(self._file_name)
 
         if file_path.is_file():
-            return pd.read_csv(self._file_name, sep=';')
+            return pd.read_csv(self._file_name, sep='\t')
         else:
             return pd.DataFrame()
 
     def save_dataframe(self, dataframe: pd.DataFrame):
-        dataframe.to_csv(self._file_name, sep=';')
+        dataframe.to_csv(self._file_name, sep='\t')
