@@ -26,7 +26,8 @@ def _set_argument_parser() -> argparse.ArgumentParser:
                                           description='Calculates the next investments that balance the portfolio',
                                           help='Additional help')
     invest_parser.add_argument('purchase_amount',
-                               help='Amount of money to be invested')
+                               help='Amount of money to be invested',
+                               type=float)
     invest_parser.add_argument('-n', '--max-count',
                                help='Limit output to maximum of n purchases. Balancing will be approximate',
                                type=int)
