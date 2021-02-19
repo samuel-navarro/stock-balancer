@@ -25,7 +25,9 @@ class TransactionPersistence:
         self._dataframe_io = dataframe_io
 
         self._transactions_dataframe = self._dataframe_io.read_dataframe()
-        self._transactions_dataframe[TRANSACTION_DATE] = pd.to_datetime(self._transactions_dataframe[TRANSACTION_DATE])
+
+        if not self._transactions_dataframe.empty:
+            self._transactions_dataframe[TRANSACTION_DATE] = pd.to_datetime(self._transactions_dataframe[TRANSACTION_DATE])
 
     def read_portfolio(self) -> Dict[Security, int]:
         """
@@ -33,6 +35,9 @@ class TransactionPersistence:
         that records all the transactions.
         :return: The portfolio in amount of shares
         """
+        if self._transactions_dataframe.empty:
+            return dict()
+
         transactions_df = self._transactions_dataframe[[SECURITY_ID, TRANSACTION_SHARE_AMOUNT]]
         aggregated_portfolio = transactions_df.groupby(SECURITY_ID).sum()
 
@@ -54,6 +59,9 @@ class TransactionPersistence:
         Reads the history of the portfolio
         :return: A dictionary whose key is a date, and whose value is the value of the portfolio at that time
         """
+        if self._transactions_dataframe.empty:
+            return dict()
+
         dated_transactions = self._transactions_dataframe.set_index(TRANSACTION_DATE).sort_index()
         all_share_ids = dated_transactions[SECURITY_ID].unique()
 

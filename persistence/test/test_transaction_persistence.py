@@ -27,6 +27,14 @@ class TestDataFrameIO(PersistenceDataFrameIO):
         self.saved_dataframes.append(dataframe)
 
 
+class EmptyDataFrameIO(PersistenceDataFrameIO):
+    def read_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame()
+
+    def save_dataframe(self, dataframe: pd.DataFrame):
+        pass
+
+
 class TransactionPersistenceTests(unittest.TestCase):
     def test_read_portfolio(self):
         test_io = TestDataFrameIO()
@@ -93,3 +101,17 @@ class TransactionPersistenceTests(unittest.TestCase):
 
         for date, price in portfolio_history.items():
             self.assertAlmostEqual(price, expected_history.get(date, -1))
+
+    def test_read_empty_portfolio(self):
+        test_io = EmptyDataFrameIO()
+        persistence = tr.TransactionPersistence(test_io)
+        portfolio = persistence.read_portfolio()
+
+        self.assertEqual(len(portfolio.keys()), 0)
+
+    def test_read_empty_history(self):
+        test_io = EmptyDataFrameIO()
+        persistence = tr.TransactionPersistence(test_io)
+        history = persistence.read_portfolio_history(lambda sec, date: 0.0)
+
+        self.assertEqual(len(history.keys()), 0)
