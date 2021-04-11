@@ -1,1 +1,1 @@
-from .balance import calculate_next_purchases, get_top_buy_purchases
+from .balance import calculate_next_purchases, get_deviation_from_ideal

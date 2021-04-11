@@ -84,16 +84,20 @@ def _process_invest_args(args):
     portfolio_values = _get_portfolio_values(current_portfolio)
 
     current_allocations = allocation_persistence.read_allocation_percentages()
-    next_purchases = balance.calculate_next_purchases(portfolio_values, current_allocations, purchase_amount)
-
+    max_count = None
     if hasattr(args, 'max_count'):
         max_count = args.max_count
-        if max_count is not None:
-            next_purchases = balance.get_top_buy_purchases(next_purchases, max_count)
+
+    next_purchases = balance.calculate_next_purchases(portfolio_values, current_allocations, purchase_amount,
+                                                      purchases_to_keep=max_count)
+    deviation_from_ideal = balance.get_deviation_from_ideal(portfolio_values, next_purchases, current_allocations)
 
     print('Next purchases')
     print('--------------')
     _print_security_dictionary(next_purchases)
+
+    if deviation_from_ideal > 1e-4:
+        print(f'The new portfolio deviates from the ideal by a standard error of {100*deviation_from_ideal:.2f}%')
 
 
 def _process_portfolio_args(args):
