@@ -148,6 +148,8 @@ def _process_interactive_mode(args):
     else:
         print('Unknown option')
 
+    input('Press any key to exit.')
+
 
 def _main():
     parser = _set_argument_parser()
