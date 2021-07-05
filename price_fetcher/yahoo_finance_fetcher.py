@@ -30,11 +30,9 @@ def get_price(security: Security, date: datetime) -> float:
 
     df_unique_dates = dataframe.groupby(dataframe.index).median()
 
-    pandas_date = pd.to_datetime(date)
-    closest_date = min(df_unique_dates.index, key=lambda d: abs(d - pandas_date))
+    pandas_date = pd.to_datetime(date, utc=True)
+    closest_date = min(pd.to_datetime(df_unique_dates.index, utc=True), key=lambda d: abs(d - pandas_date))
 
     data_at_date = df_unique_dates.loc[closest_date]
 
     return (data_at_date['High'] + data_at_date['Low']) / 2.0
-
-
