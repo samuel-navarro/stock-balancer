@@ -19,6 +19,9 @@ def _set_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('-t', '--transactions_file',
                         help='File containing the transactions of the current portfolio as tab-separated-values',
                         default=str(default_data_directory / 'security_transactions.tsv'))
+    parser.add_argument('-i', '--interactive',
+                        help='Use the script in interactive mode. Ignores any other option.',
+                        action='store_true')
 
     subparsers = parser.add_subparsers(help='Subcommands')
 
@@ -65,9 +68,12 @@ def _print_security_dictionary(dictionary: dict):
     longest_security_name = max(dictionary.keys(), key=lambda sec: len(sec.identifier))
     longest_length = len(longest_security_name.identifier)
 
-    for security, purchase in dictionary.items():
+    for security, amount in sorted(dictionary.items(), key=lambda item: item[1], reverse=True):
         security_name = (security.identifier + ':').ljust(longest_length + 2)
-        print(f'{security_name}{purchase:.2f}')
+        print(f'{security_name}{amount:.2f}')
+
+    print()
+    print(f'Total: {sum(dictionary.values())}')
 
 
 def _process_invest_args(args):
@@ -78,15 +84,20 @@ def _process_invest_args(args):
     portfolio_values = _get_portfolio_values(current_portfolio)
 
     current_allocations = allocation_persistence.read_allocation_percentages()
-    next_purchases = balance.calculate_next_purchases(portfolio_values, current_allocations, purchase_amount)
-
+    max_count = None
     if hasattr(args, 'max_count'):
         max_count = args.max_count
-        next_purchases = balance.get_top_buy_purchases(next_purchases, max_count)
+
+    next_purchases = balance.calculate_next_purchases(portfolio_values, current_allocations, purchase_amount,
+                                                      purchases_to_keep=max_count)
+    deviation_from_ideal = balance.get_deviation_from_ideal(portfolio_values, next_purchases, current_allocations)
 
     print('Next purchases')
     print('--------------')
     _print_security_dictionary(next_purchases)
+
+    if deviation_from_ideal > 1e-4:
+        print(f'The new portfolio deviates from the ideal by a standard error of {100*deviation_from_ideal:.2f}%')
 
 
 def _process_portfolio_args(args):
@@ -107,10 +118,45 @@ def _process_portfolio_args(args):
             print(f'{date.strftime("%d.%m.%Y")}: {value}')
 
 
+def _process_interactive_mode(args):
+    print('Available actions:')
+    print('    Invest (i): Invest a certain amount')
+    print('    Portfolio (p): Display information about the portfolio')
+    print()
+    option = input('Option: ').lower().strip()
+    if option == 'invest' or option == 'i':
+        try:
+            amount = float(input('Amount to invest: '))
+            limit_str = input('Maximum number of instruments to invest in (empty for all): ').strip()
+            limit = int(limit_str) if limit_str != '' else None
+
+            args.purchase_amount = amount
+            args.max_count = limit
+
+            _process_invest_args(args)
+        except ValueError:
+            print('ERROR: Invalid input')
+            exit(-1)
+
+    elif option == 'portfolio' or option == 'p':
+        read = input('Print portfolio values (y/n)? ').strip()
+        print_history = input('Print historical values (y/n)? ').strip()
+        args.read = (read == 'y') or (read == 'yes')
+        args.get_historical_values = (print_history == 'y') or (print_history == 'yes')
+        _process_portfolio_args(args)
+
+    else:
+        print('Unknown option')
+
+    input('Press any key to exit.')
+
+
 def _main():
     parser = _set_argument_parser()
     args = parser.parse_args()
-    if args.which == 'invest':
+    if args.interactive:
+        _process_interactive_mode(args)
+    elif args.which == 'invest':
         _process_invest_args(args)
     elif args.which == 'portfolio':
         _process_portfolio_args(args)

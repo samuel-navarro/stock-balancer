@@ -39,3 +39,22 @@ class TestBalance(unittest.TestCase):
         for security, percentage in result_percentages.items():
             expected_percent = desired_percentages.get(security, 0)
             self.assertAlmostEqual(percentage, expected_percent, 10)
+
+    def test_calculate_limited_purchases(self):
+        desired_percentages = {Security('TSLA'): 0.25, Security('AMZN'): 0.5, Security('AAPL'): 0.1,
+                               Security('MSFT'): 0.15}
+
+        total_invested = 10_000
+        portfolio = {sec: total_invested * percent for sec, percent in desired_percentages.items()}
+
+        amount_to_invest = 1000
+        portfolio[Security('TSLA')] -= amount_to_invest / 2
+        portfolio[Security('AMZN')] -= amount_to_invest / 2
+
+        next_purchases = bln.calculate_next_purchases(portfolio, desired_percentages, amount_to_invest,
+                                                      purchases_to_keep=2)
+        self.assertIn(Security('TSLA'), next_purchases.keys())
+        self.assertIn(Security('AMZN'), next_purchases.keys())
+
+        self.assertAlmostEqual(next_purchases[Security('TSLA')], amount_to_invest / 2)
+        self.assertAlmostEqual(next_purchases[Security('AMZN')], amount_to_invest / 2)

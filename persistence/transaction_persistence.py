@@ -76,7 +76,7 @@ class TransactionPersistence:
         share_prices = pd.DataFrame(0, index=date_index, columns=all_share_ids)
         for share_id in all_share_ids:
             date_to_price = lambda date: price_provider(Security(share_id), date)
-            share_prices[share_id] = np.vectorize(date_to_price)(date_index)
+            share_prices[share_id] = np.vectorize(date_to_price)(date_index.to_pydatetime())
 
         portfolio = (share_prices * share_history).apply(np.sum, axis=1)
 
