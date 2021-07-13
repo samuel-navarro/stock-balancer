@@ -2,7 +2,6 @@ import itertools
 from typing import Dict, Sequence, Optional
 
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.optimize as opt
 
 from data_types import Security
@@ -52,6 +51,9 @@ def _calculate_limited_purchases(current_portfolio: Dict[Security, Money], desir
                                       args=(stock_candidates, current_portfolio, desired_percentages),
                                       constraints=constraint_sum_to_investment)
         deviation = purchase_optim.fun
+        if any(purchase < 0 for purchase in purchase_optim.x):
+            continue
+
         if deviation < min_deviation:
             min_deviation = deviation
             next_purchases = dict(zip(stock_candidates, purchase_optim.x))
