@@ -92,6 +92,8 @@ def _process_invest_args(args):
                                                       purchases_to_keep=max_count)
     deviation_from_ideal = balance.get_deviation_from_ideal(portfolio_values, next_purchases, current_allocations)
 
+    print(f'Portfolio value before purchases: {sum(portfolio_values.values())}')
+    print()
     print('Next purchases')
     print('--------------')
     _print_security_dictionary(next_purchases)
